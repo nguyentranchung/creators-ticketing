@@ -113,8 +113,10 @@ class TicketSubmitForm extends Component
             }
         }
 
+        $departmentTable = config('creators-ticketing.table_prefix') . 'departments';
+
         $this->validate([
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => "required|exists:{$departmentTable},id",
         ]);
 
         foreach ($this->form_fields as $field) {
@@ -127,7 +129,7 @@ class TicketSubmitForm extends Component
             }
         }
 
-        $defaultStatus = TicketStatus::where('is_default', true)->first();
+        $defaultStatus = TicketStatus::where('is_default_for_new', true)->first();
 
         Ticket::create([
             'department_id' => $this->department_id,
