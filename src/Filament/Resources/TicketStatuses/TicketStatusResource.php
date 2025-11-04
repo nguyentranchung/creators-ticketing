@@ -20,12 +20,13 @@ use Filament\Tables\Columns\ColorColumn;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Schemas\Components\Utilities\Set;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
+use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
 use daacreators\CreatorsTicketing\Filament\Resources\TicketStatuses\Pages;
 
 class TicketStatusResource extends Resource
 {
-    use HasNavigationVisibility;
+    use HasNavigationVisibility, HasTicketingNavGroup;
     
     protected static ?string $model = TicketStatus::class;
 

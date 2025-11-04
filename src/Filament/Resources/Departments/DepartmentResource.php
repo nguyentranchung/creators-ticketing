@@ -22,13 +22,14 @@ use Filament\Tables\Filters\TernaryFilter;
 use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Set;
 use daacreators\CreatorsTicketing\Models\Department;
+use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\Pages;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\RelationManagers\AgentsRelationManager;
 
 class DepartmentResource extends Resource
 {
-    use HasNavigationVisibility;
+    use HasNavigationVisibility, HasTicketingNavGroup;
     
     protected static ?string $model = Department::class;
 

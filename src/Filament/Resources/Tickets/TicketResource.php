@@ -41,13 +41,14 @@ use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Filament\Infolists\Components\Section as InfoSection;
+use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\Pages;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\RelationManagers\InternalNotesRelationManager;
 
 class TicketResource extends Resource
 {
-    use HasTicketPermissions;
+    use HasTicketPermissions, HasTicketingNavGroup;
 
     protected static ?string $model = Ticket::class;
     

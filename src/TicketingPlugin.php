@@ -4,7 +4,6 @@ namespace daacreators\CreatorsTicketing;
 
 use Filament\Panel;
 use Filament\Contracts\Plugin;
-use Filament\Facades\Filament;
 use daacreators\CreatorsTicketing\Filament\Resources\Forms\FormResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\TicketResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
@@ -19,18 +18,12 @@ class TicketingPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $allResources = [
+        $panel->resources([
             FormResource::class,
             DepartmentResource::class,
             TicketResource::class,
             TicketStatusResource::class,
-        ];
-
-        foreach ($allResources as $resource) {
-            $resource::navigationGroup(config('creators-ticketing.navigation_group'));
-        }
-
-        $panel->resources($allResources);
+        ]);
     }
 
     public function boot(Panel $panel): void
