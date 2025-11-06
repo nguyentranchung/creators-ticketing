@@ -6,6 +6,20 @@
 
 A robust and dynamic ticketing system plugin for Filament 4, providing a complete helpdesk solution for your Laravel application.
 
+## Screenshots
+
+![Tickets List](screenshots/tickets.png)
+*Tickets List*
+
+![Ticket View](screenshots/ticket-view.png)
+*Ticket View*
+
+![Submit Ticket Form](screenshots/submit-ticket.png)
+*Submit Ticket Form*
+
+![User Tickets List](screenshots/user-tickets-list.png)
+*User's Tickets List*```
+
 ## Features
 
 - Full ticketing system with departments and forms
