@@ -179,11 +179,50 @@ class TicketResource extends Resource
                             ->visible(fn (?Model $record) => $record === null)
                             ->live()
                             ->afterStateUpdated(function (Set $set) {
+                                $set('form_id', null);
                                 $set('custom_fields', []);
                             }),
                         
+                        Select::make('form_id')
+                            ->label(__('creators-ticketing::resources.ticket.form_label') ?? 'Ticket Form')
+                            ->options(function (Get $get) {
+                                $departmentId = $get('department_id');
+                                if (!$departmentId) return [];
+                                
+                                $department = Department::find($departmentId);
+                                if (!$department) return [];
+
+                                $table = (new Form)->getTable();
+                                
+                                return $department->forms()
+                                    ->where($table . '.is_active', true)
+                                    ->pluck($table . '.name', $table . '.id')
+                                    ->toArray();
+                            })
+                            ->required(fn(Get $get) => !empty(Department::find($get('department_id'))?->forms()->exists()))
+                            ->visible(fn (Get $get, ?Model $record) => 
+                                ($record === null || $record->form_id === null) && 
+                                $get('department_id') !== null && 
+                                Department::find($get('department_id'))?->forms()->count() > 1
+                            )
+                            ->live()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('custom_fields', []);
+                            })
+                            ->default(function (Get $get) {
+                                $departmentId = $get('department_id');
+                                $department = Department::find($departmentId);
+                                if (!$department) return null;
+
+                                $table = (new Form)->getTable();
+                                return $department->forms()
+                                    ->where($table . '.is_active', true)
+                                    ->first()
+                                    ?->id;
+                            }),
+                        
                         Group::make()
-                            ->schema(fn (Get $get, ?Model $record): array => static::getDynamicFormFields($record, $get('department_id'), $permissions, $user))
+                            ->schema(fn (Get $get, ?Model $record): array => static::getDynamicFormFields($record, $get('department_id'), $get('form_id'), $permissions, $user))
                             ->visible(fn (?Model $record, Get $get) => 
                                 $record !== null || $get('department_id') !== null
                             )
@@ -273,7 +312,7 @@ class TicketResource extends Resource
             ])->columns(3);
     }
 
-    protected static function getDynamicFormFields(?Model $record, $departmentId, $permissions, $user): array
+    protected static function getDynamicFormFields(?Model $record, $departmentId, $formId, $permissions, $user): array
     {
         if (!$departmentId) {
             $departmentId = $record?->department_id;
@@ -288,8 +327,34 @@ class TicketResource extends Resource
             return [];
         }
 
-        $form = $department->forms()->with('fields')->first();
+        $form = null;
+
+        if ($formId) {
+            $form = Form::with('fields')->find($formId);
+        }
+        elseif ($record instanceof Ticket) {
+             if (isset($record->form_id)) {
+                 $form = Form::with('fields')->find($record->form_id);
+             } 
+             
+             if (!$form) {
+                $form = $department->forms()->with('fields')->first();
+             }
+        }
+        elseif ($department->forms()->count() === 1) {
+            $form = $department->forms()->with('fields')->first();
+        }
+
         if (!$form || !$form->fields->count()) {
+            if ($department->forms()->count() > 0 && !$formId) {
+                 return [
+                    Placeholder::make('select_form')
+                        ->label('')
+                        ->content(__('creators-ticketing::resources.ticket.select_form_message') ?? 'Please select a form.')
+                        ->columnSpanFull(),
+                 ];
+            }
+
             return [
                 Placeholder::make('no_form')
                     ->label('')
@@ -423,9 +488,18 @@ class TicketResource extends Resource
                 InfoSection::make(__('creators-ticketing::resources.ticket.custom_fields'))
                     ->schema(function (Ticket $record) {
                         $department = $record->department;
-                        $form = $department?->forms()->with('fields')->first();
                         
-                        if (!$form || !$form->fields->count() || empty($record->custom_fields)) {
+                        $forms = collect();
+
+                        if (isset($record->form_id)) {
+                             $forms = Form::where('id', $record->form_id)->with('fields')->get();
+                        } 
+                        
+                        if ($forms->isEmpty() && $department) {
+                            $forms = $department->forms()->with('fields')->get();
+                        }
+                        
+                        if ($forms->isEmpty() || empty($record->custom_fields)) {
                             return [
                                 TextEntry::make('no_custom_fields')
                                     ->label('')
@@ -435,29 +509,35 @@ class TicketResource extends Resource
                         }
                         
                         $schema = [];
-                        
-                        foreach ($form->fields as $field) {
-                            $value = $record->custom_fields[$field->name] ?? null;
-                            
-                            if ($value !== null) {
-                                $schema[] = TextEntry::make("custom_fields.{$field->name}")
-                                    ->label($field->label)
-                                    ->formatStateUsing(function ($state) use ($field) {
-                                        if ($field->type === 'checkbox' || $field->type === 'toggle') {
-                                            return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
-                                        }
-                                        
-                                        if ($field->type === 'select' || $field->type === 'radio') {
-                                            $options = $field->options ?? [];
-                                            return $options[$state] ?? $state;
-                                        }
-                                        
-                                        if ($field->type === 'file') {
-                                            return is_array($state) ? implode(', ', $state) : $state;
-                                        }
-                                        
-                                        return $state;
-                                    });
+                        $processedFields = [];
+
+                        foreach ($forms as $form) {
+                            foreach ($form->fields as $field) {
+                                if (in_array($field->name, $processedFields)) continue;
+
+                                $value = $record->custom_fields[$field->name] ?? null;
+                                
+                                if ($value !== null) {
+                                    $processedFields[] = $field->name;
+                                    $schema[] = TextEntry::make("custom_fields.{$field->name}")
+                                        ->label($field->label)
+                                        ->formatStateUsing(function ($state) use ($field) {
+                                            if ($field->type === 'checkbox' || $field->type === 'toggle') {
+                                                return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
+                                            }
+                                            
+                                            if ($field->type === 'select' || $field->type === 'radio') {
+                                                $options = $field->options ?? [];
+                                                return $options[$state] ?? $state;
+                                            }
+                                            
+                                            if ($field->type === 'file') {
+                                                return is_array($state) ? implode(', ', $state) : $state;
+                                            }
+                                            
+                                            return $state;
+                                        });
+                                }
                             }
                         }
                         
@@ -470,8 +550,7 @@ class TicketResource extends Resource
                     })
                     ->columns(2)
                     ->visible(fn (Ticket $record) => 
-                        !empty($record->custom_fields) || 
-                        $record->department?->forms()->first()?->fields->count() > 0
+                        !empty($record->custom_fields)
                     ),
             ]);
     }
@@ -512,8 +591,8 @@ class TicketResource extends Resource
                     $query->where('user_id', $user->id);
                 }
             })
-            ->recordClasses(fn (Model $record) => match (true) {
-                method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id()) 
+           ->recordClasses(fn (Model $record) => match (true) {
+                method_exists($record, 'isUnseen') && $record->isUnseen() 
                     => 'font-bold bg-primary-50/50 dark:bg-primary-900/20',
                 default => null,
             })
@@ -523,9 +602,9 @@ class TicketResource extends Resource
                     ->color('info')
                     ->size('sm')
                     ->state(fn (Model $record) =>
-                        method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id())
-                            ? __('creators-ticketing::resources.ticket.new')
-                            : null
+                                        method_exists($record, 'isUnseen') && $record->isUnseen()
+                                            ? __('creators-ticketing::resources.ticket.new')
+                                            : null
                     )
                     ->extraAttributes(['class' => 'text-[11px]'])
                     ->tooltip(fn ($state) => $state ? __('creators-ticketing::resources.ticket.new_tool_tip') : null),
@@ -537,7 +616,7 @@ class TicketResource extends Resource
                 
                 TextColumn::make('title')
                     ->label(__('creators-ticketing::resources.ticket.title_field'))
-                    ->weight(fn (Model $record) => (method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id())) ? 'bold' : 'medium')
+                    ->weight(fn (Model $record) => (method_exists($record, 'isUnseen') && $record->isUnseen()) ? 'bold' : 'medium')
                     ->searchable(query: function ($query, string $search) {
                         return $query->where(function ($q) use ($search) {
                             $q->where('ticket_uid', 'like', "%{$search}%")

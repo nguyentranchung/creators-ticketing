@@ -27,6 +27,6 @@ class Form extends Model
 
     public function departments(): BelongsToMany
     {
-    return $this->belongsToMany(Department::class, config('creators-ticketing.table_prefix') . 'department_forms');
+        return $this->belongsToMany(Department::class, config('creators-ticketing.table_prefix') . 'department_forms');
     }
 }

@@ -76,13 +76,13 @@ class DepartmentResource extends Resource
                 ->default('public')
                 ->helperText(__('creators-ticketing::resources.department.visibility_helper')),
 
-            Select::make('form_id')
-                ->label(__('creators-ticketing::resources.department.form'))
-                ->options(Form::where('is_active', true)->pluck('name', 'id'))
-                ->searchable()
+            Select::make('forms')
+                ->label(__('creators-ticketing::resources.department.forms'))
+                ->relationship('forms', 'name')
+                ->multiple()
                 ->preload()
-                ->helperText(__('creators-ticketing::resources.department.form_helper'))
-                ->dehydrated(false),
+                ->searchable()
+                ->helperText(__('creators-ticketing::resources.department.form_helper')),
 
             Textarea::make('description')
                 ->label(__('creators-ticketing::resources.department.description'))
@@ -109,13 +109,17 @@ class DepartmentResource extends Resource
                 TextColumn::make('slug')
                     ->label(__('creators-ticketing::resources.department.slug')),
 
-                TextColumn::make('form_name')
-                    ->label(__('creators-ticketing::resources.department.form'))
+                TextColumn::make('forms.name')
+                    ->label(__('creators-ticketing::resources.department.forms'))
+                    ->limitList(2)
+                    ->listWithLineBreaks()
+                    ->expandableLimitedList()
                     ->badge()
+                    ->tooltip(fn ($record) =>
+                        $record->forms->pluck('name')->implode(', ')
+                    )
                     ->color('info')
-                    ->getStateUsing(function (Department $record) {
-                        return $record->forms()->first()?->name ?? __('creators-ticketing::resources.department.form_none');
-                    }),
+                    ->separator(', '), 
 
                 TextColumn::make('visibility')
                     ->label(__('creators-ticketing::resources.department.visibility'))

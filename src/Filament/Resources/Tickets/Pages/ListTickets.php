@@ -88,10 +88,8 @@ class ListTickets extends ListRecords
             'my_tickets' => Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
                 ->modifyQueryUsing(fn (Builder $query) => 
                     $query->where('user_id', $user->id)
-                        ->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false))
                 )
                 ->badge(Ticket::where('user_id', $user->id)
-                    ->whereHas('status', fn ($q) => $q->where('is_closing_status', false))
                     ->count())
                 ->icon('heroicon-o-user'),
 
@@ -127,10 +125,8 @@ class ListTickets extends ListRecords
             'my_tickets' => Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
                 ->modifyQueryUsing(fn (Builder $query) => 
                     $query->where('user_id', $user->id)
-                        ->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false))
                 )
                 ->badge(Ticket::where('user_id', $user->id)
-                    ->whereHas('status', fn ($q) => $q->where('is_closing_status', false))
                     ->count())
                 ->icon('heroicon-o-user'),
 
@@ -188,10 +184,8 @@ class ListTickets extends ListRecords
         $tabs['my_tickets'] = Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
             ->modifyQueryUsing(fn (Builder $query) => 
                 $query->where('user_id', $user->id)
-                    ->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false))
             )
             ->badge(Ticket::where('user_id', $user->id)
-                ->whereHas('status', fn ($q) => $q->where('is_closing_status', false))
                 ->count())
             ->icon('heroicon-o-user');
 
@@ -271,18 +265,16 @@ class ListTickets extends ListRecords
             $query = $query->forUser($user->id);
         }
 
-        $activeTab = $this->activeTab ?? 'all';
-        
-        if ($activeTab !== 'closed') {
-            $query = $query->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false));
-        }
-
         return $query;
     }
 
     public function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return parent::table($table)
-            ->recordClasses(fn (Model $record) => $record->isUnseenBy(Filament::auth()->id()) ? 'font-bold bg-gray-50 dark:bg-gray-900/50' : null);
+            ->recordClasses(fn (Model $record) => 
+                (method_exists($record, 'isUnseen') && $record->isUnseen()) 
+                ? 'font-bold bg-primary-50/50 dark:bg-primary-900/20' 
+                : null
+            );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace daacreators\CreatorsTicketing\Http\Livewire;
 
+use daacreators\CreatorsTicketing\Models\Form;
 use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
@@ -13,12 +14,14 @@ class TicketSubmitForm extends Component
     use WithFileUploads;
 
     public $department_id;
+    public $form_id;
     public $custom_fields = [];
     public $form_fields = [];
     public $departments = [];
+    public $available_forms = []; 
     public $userTickets = [];
-    public $showForm = true;
-    public $selectedTicket = null;
+    public $showForm = true; 
+    public $selectedTicket = null; 
 
     public function mount()
     {
@@ -31,18 +34,8 @@ class TicketSubmitForm extends Component
         if (auth()->check()) {
             $this->userTickets = Ticket::where('user_id', auth()->id())
                 ->with(['department', 'status', 'publicReplies'])
-                ->orderBy('created_at', 'desc')
+                ->orderBy('last_activity_at', 'desc')
                 ->get();
-            foreach ($this->userTickets as $t) {
-                if (!$t->is_seen) {
-                    $t->markSeenBy(auth()->id());
-                }
-                foreach ($t->publicReplies as $r) {
-                    if (!$r->is_seen) {
-                        $r->markSeenBy(auth()->id());
-                    }
-                }
-            }
         }
     }
 
@@ -52,24 +45,44 @@ class TicketSubmitForm extends Component
             ->where('id', $ticketId)
             ->where('user_id', auth()->id())
             ->first();
-        $this->selectedTicket->markSeenBy(auth()->id());
-        foreach ($this->selectedTicket->publicReplies as $r) {
-            if (!$r->is_seen) {
-                $r->markSeenBy(auth()->id());
-            }
+
+        if ($this->selectedTicket) {
+             foreach ($this->selectedTicket->publicReplies as $r) {
+                 $r->markSeenBy(auth()->id());
+             }
+             
+             $this->selectedTicket->markSeenBy(auth()->id());
         }
-
-        $this->showForm = false;
+        $this->showForm = false; 
     }
-
+    
     public function backToList()
     {
         $this->selectedTicket = null;
-        $this->showForm = true;
+        $this->showForm = false; 
         $this->loadUserTickets();
     }
 
     public function updatedDepartmentId()
+    {
+        $this->reset(['form_id', 'custom_fields', 'form_fields', 'available_forms']);
+
+        if (!$this->department_id) return;
+
+        $department = Department::find($this->department_id);
+        if (!$department) return;
+
+        $forms = $department->forms()->where('is_active', true)->get();
+
+        if ($forms->count() === 1) {
+            $this->form_id = $forms->first()->id;
+            $this->loadFormFields();
+        } elseif ($forms->count() > 1) {
+            $this->available_forms = $forms;
+        }
+    }
+
+    public function updatedFormId()
     {
         $this->custom_fields = [];
         $this->loadFormFields();
@@ -77,23 +90,12 @@ class TicketSubmitForm extends Component
 
     protected function loadFormFields()
     {
-        if (!$this->department_id) {
+        if (!$this->form_id) {
             $this->form_fields = [];
             return;
         }
-
-        $department = Department::with('forms.fields')->find($this->department_id);
-        
-        if (!$department) {
-            $this->form_fields = [];
-            return;
-        }
-
-        $form = $department->forms()->with('fields')->first();
-        
-        $this->form_fields = $form && $form->fields->count() 
-            ? $form->fields->toArray() 
-            : [];
+        $form = Form::with('fields')->find($this->form_id);
+        $this->form_fields = $form && $form->fields->count() ? $form->fields->toArray() : [];
     }
 
     public function submit()
@@ -102,9 +104,7 @@ class TicketSubmitForm extends Component
             
         if ($maxTickets && $maxTickets > 0) {
             $openTicketsCount = Ticket::where('user_id', auth()->id())
-                ->whereHas('status', function($query) {
-                    $query->where('is_closing_status', false);
-                })
+                ->whereHas('status', fn($q) => $q->where('is_closing_status', false))
                 ->count();
             
             if ($openTicketsCount >= $maxTickets) {
@@ -114,18 +114,19 @@ class TicketSubmitForm extends Component
         }
 
         $departmentTable = config('creators-ticketing.table_prefix') . 'departments';
+        $formTable = config('creators-ticketing.table_prefix') . 'forms';
 
         $this->validate([
             'department_id' => "required|exists:{$departmentTable},id",
+            'form_id' => "required|exists:{$formTable},id",
         ]);
 
         foreach ($this->form_fields as $field) {
             if ($field['is_required']) {
-                $this->validate([
-                    "custom_fields.{$field['name']}" => 'required',
-                ], [
-                    "custom_fields.{$field['name']}.required" => "The {$field['label']} field is required.",
-                ]);
+                $this->validate(
+                    ["custom_fields.{$field['name']}" => 'required'], 
+                    ["custom_fields.{$field['name']}.required" => "The {$field['label']} field is required."]
+                );
             }
         }
 
@@ -133,15 +134,17 @@ class TicketSubmitForm extends Component
 
         Ticket::create([
             'department_id' => $this->department_id,
+            'form_id' => $this->form_id,
             'custom_fields' => $this->custom_fields,
             'user_id' => auth()->id(),
             'ticket_status_id' => $defaultStatus?->id,
             'last_activity_at' => now(),
         ]);
 
-        session()->flash('success', 'Ticket submitted successfully! Our support team will respond soon.');
+        session()->flash('success', 'Ticket submitted successfully!');
 
-        $this->reset(['department_id', 'custom_fields', 'form_fields']);
+        $this->reset(['department_id', 'form_id', 'custom_fields', 'form_fields', 'available_forms']);
+        $this->showForm = false; 
         $this->loadUserTickets();
     }
 

@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TicketReply extends Model
 {
     protected $guarded = [];
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-
         $this->setTable(config('creators-ticketing.table_prefix') . 'ticket_replies');
     }
+
     protected $casts = [
         'is_internal_note' => 'boolean',
         'is_seen' => 'boolean',
@@ -33,6 +34,14 @@ class TicketReply extends Model
 
     public function markSeenBy($userId): void
     {
+        if ($userId == $this->user_id) {
+            return;
+        }
+
+        if ($this->is_seen) {
+            return;
+        }
+
         $this->is_seen = true;
         $this->seen_by = $userId;
         $this->seen_at = now();

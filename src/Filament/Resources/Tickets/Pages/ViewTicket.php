@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Component;
 use Filament\Infolists\Components\TextEntry;
+use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Form as SchemaForm;
 use daacreators\CreatorsTicketing\Models\Department;
@@ -440,7 +441,15 @@ class ViewTicket extends ViewRecord
 
     protected function getCustomFieldsDisplay(): array
     {
-        $form = $this->record->department?->forms()->with('fields')->first();
+        $form = null;
+        
+        if ($this->record->form_id) {
+            $form = Form::with('fields')->find($this->record->form_id);
+        }
+        
+        if (!$form) {
+            $form = $this->record->department?->forms()->with('fields')->first();
+        }
         
         if (!$form || !$form->fields->count() || empty($this->record->custom_fields)) {
             return [];

@@ -20,6 +20,12 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 ![User Tickets List](screenshots/user-tickets-list.png)
 *User's Tickets List*
 
+![User Tickets List](screenshots/user-facing-chat-view-open.png)
+*User's Chat View*
+
+![User Tickets List](screenshots/user-facing-chat-view-closed.png)
+*User's Chat View with Closed Status*
+
 ## Features
 
 - Full ticketing system with departments and forms
@@ -83,6 +89,15 @@ class AdminPanelProvider extends PanelProvider
 ```
 
 Run the migrations:
+
+```bash
+php artisan migrate
+```
+
+## Upgrading
+
+### Upgrading from v1.0.5 to v1.0.6
+**⚠️ Important:** Version 1.0.6 introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
 
 ```bash
 php artisan migrate

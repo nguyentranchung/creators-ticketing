@@ -1,4 +1,5 @@
 <?php
+
 namespace daacreators\CreatorsTicketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +34,6 @@ class Ticket extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-
         $this->setTable(config('creators-ticketing.table_prefix') . 'tickets');
     }
 
@@ -81,6 +81,14 @@ class Ticket extends Model
 
     public function markSeenBy($userId): void
     {
+        if ($userId == $this->user_id) {
+            return;
+        }
+
+        if ($this->is_seen) {
+            return;
+        }
+
         $this->is_seen = true;
         $this->seen_by = $userId;
         $this->seen_at = now();
@@ -95,15 +103,11 @@ class Ticket extends Model
         $this->saveQuietly();
     }
 
-    public function isUnseenBy($userId): bool
+    public function isUnseen(): bool
     {
-        if (!$this->is_seen) {
-            return true;
-        }
-        
-        return $this->seen_by != $userId;
+        return !$this->is_seen;
     }
-
+    
     public function getCustomField(string $fieldName)
     {
         return $this->custom_fields[$fieldName] ?? null;
@@ -132,7 +136,7 @@ class Ticket extends Model
             return $query;
         }
 
-    $departmentIds = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $departmentIds = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
             ->where('user_id', $userId)
             ->pluck('department_id')
             ->toArray();
@@ -144,13 +148,7 @@ class Ticket extends Model
             });
         }
 
-    $canCreateTickets = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
-            ->where('user_id', $userId)
-            ->where('can_create_tickets', true)
-            ->pluck('department_id')
-            ->toArray();
-
-    $canViewAllDepartments = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $canViewAllDepartments = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
             ->where('user_id', $userId)
             ->where('can_view_all_tickets', true)
             ->pluck('department_id')

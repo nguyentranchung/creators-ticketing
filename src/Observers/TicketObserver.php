@@ -107,6 +107,13 @@ class TicketObserver
         ]);
 
         $ticket->last_activity_at = now();
+
+        if ($reply->user_id == $ticket->user_id) {
+            $ticket->is_seen = false;
+            $ticket->seen_by = null;
+            $ticket->seen_at = null;
+        }
+
         $ticket->saveQuietly();
 
         if ($reply instanceof \Daacreators\CreatorsTicketing\Models\TicketReply) {
@@ -115,8 +122,6 @@ class TicketObserver
             $reply->seen_at = null;
             $reply->saveQuietly();
         }
-        
-        $ticket->markUnseen();
     }
 
     protected function generateTicketUid(): string
