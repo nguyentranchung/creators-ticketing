@@ -105,6 +105,7 @@ php artisan db:seed --class=daacreators\\CreatorsTicketing\\Database\\Seeders\\T
 This will create the following default ticket statuses:
 - **Open** (Blue) - Default status for new tickets
 - **In Progress** (Amber) - Tickets being worked on
+- **Answered** (Green) - Tickets that have been answered
 - **Pending** (Purple) - Tickets waiting for response
 - **Resolved** (Green) - Tickets that have been resolved
 - **Closed** (Gray) - Closing status for completed tickets
