@@ -590,56 +590,56 @@ class TicketResource extends Resource
                 default => null,
             })
             ->columns([
-               BadgeColumn::make('unread_indicator')
-                   ->label('')
-                   ->color('info')
-                   ->size('sm')
-                   ->state(fn (Model $record) => method_exists($record, 'isUnseen') && $record->isUnseen()
-                                           ? __('creators-ticketing::resources.ticket.new')
-                                           : null
-                   )
-                   ->extraAttributes(['class' => 'text-[11px]'])
-                   ->tooltip(fn ($state) => $state ? __('creators-ticketing::resources.ticket.new_tool_tip') : null),
+                BadgeColumn::make('unread_indicator')
+                    ->label('')
+                    ->color('info')
+                    ->size('sm')
+                    ->state(fn (Model $record) => method_exists($record, 'isUnseen') && $record->isUnseen()
+                                            ? __('creators-ticketing::resources.ticket.new')
+                                            : null
+                    )
+                    ->extraAttributes(['class' => 'text-[11px]'])
+                    ->tooltip(fn ($state) => $state ? __('creators-ticketing::resources.ticket.new_tool_tip') : null),
 
-               TextColumn::make('ticket_uid')
-                   ->label(__('creators-ticketing::resources.ticket.id'))
-                   ->searchable()
-                   ->sortable(),
+                TextColumn::make('ticket_uid')
+                    ->label(__('creators-ticketing::resources.ticket.id'))
+                    ->searchable()
+                    ->sortable(),
 
-               TextColumn::make('title')
-                   ->label(__('creators-ticketing::resources.ticket.title_field'))
-                   ->weight(fn (Model $record) => (method_exists($record, 'isUnseen') && $record->isUnseen()) ? 'bold' : 'medium')
-                   ->searchable(query: function ($query, string $search) {
-                       return $query->where(function ($q) use ($search) {
-                           $q->where('ticket_uid', 'like', "%{$search}%")
-                               ->orWhereRaw("JSON_EXTRACT(custom_fields, '$.*') LIKE ?", ["%{$search}%"]);
-                       });
-                   })
-                   ->limit(40)
-                   ->tooltip(fn (Ticket $record): string => $record->title),
+                TextColumn::make('title')
+                    ->label(__('creators-ticketing::resources.ticket.title_field'))
+                    ->weight(fn (Model $record) => (method_exists($record, 'isUnseen') && $record->isUnseen()) ? 'bold' : 'medium')
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->where(function ($q) use ($search) {
+                            $q->where('ticket_uid', 'like', "%{$search}%")
+                                ->orWhereRaw("JSON_EXTRACT(custom_fields, '$.*') LIKE ?", ["%{$search}%"]);
+                        });
+                    })
+                    ->limit(40)
+                    ->tooltip(fn (Ticket $record): string => $record->title),
 
-               TextColumn::make('department.name')
-                   ->label(__('creators-ticketing::resources.ticket.department'))
-                   ->color('primary')
-                   ->searchable()
-                   ->sortable(),
+                TextColumn::make('department.name')
+                    ->label(__('creators-ticketing::resources.ticket.department'))
+                    ->color('primary')
+                    ->searchable()
+                    ->sortable(),
 
-               TextColumn::make('requester.name')
-                   ->label(__('creators-ticketing::resources.ticket.requester'))
-                   ->searchable()
-                   ->sortable(),
+                TextColumn::make('requester.name')
+                    ->label(__('creators-ticketing::resources.ticket.requester'))
+                    ->searchable()
+                    ->sortable(),
 
-               TextColumn::make('assignee.name')
-                   ->label(__('creators-ticketing::resources.ticket.assignee'))
-                   ->searchable()
-                   ->sortable()
-                   ->default(__('creators-ticketing::resources.ticket.unassigned'))
-                   ->formatStateUsing(fn ($state) => $state ?: __('creators-ticketing::resources.ticket.unassigned')),
+                TextColumn::make('assignee.name')
+                    ->label(__('creators-ticketing::resources.ticket.assignee'))
+                    ->searchable()
+                    ->sortable()
+                    ->default(__('creators-ticketing::resources.ticket.unassigned'))
+                    ->formatStateUsing(fn ($state) => $state ?: __('creators-ticketing::resources.ticket.unassigned')),
 
-               TextColumn::make('status.name')
-                   ->label(__('creators-ticketing::resources.ticket.status'))
-                   ->formatStateUsing(fn ($record) => $record->status?->name ?
-                           "<span style='
+                TextColumn::make('status.name')
+                    ->label(__('creators-ticketing::resources.ticket.status'))
+                    ->formatStateUsing(fn ($record) => $record->status?->name ?
+                            "<span style='
                                 display: inline-flex;
                                 align-items: center;
                                 background-color: {$record->status->color}10;
@@ -652,132 +652,132 @@ class TicketResource extends Resource
                                 border: 1.5px solid {$record->status->color};
                                 white-space: nowrap;
                             '>{$record->status->name}</span>"
-                       : ''
-                   )
-                   ->html(),
+                        : ''
+                    )
+                    ->html(),
 
-               TextColumn::make('priority')
-                   ->label(__('creators-ticketing::resources.ticket.priority'))
-                   ->badge(),
+                TextColumn::make('priority')
+                    ->label(__('creators-ticketing::resources.ticket.priority'))
+                    ->badge(),
 
-               TextColumn::make('last_activity_at')
-                   ->label(__('creators-ticketing::resources.ticket.last_activity'))
-                   ->dateTime()
-                   ->sortable()
-                   ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('last_activity_at')
+                    ->label(__('creators-ticketing::resources.ticket.last_activity'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 SelectFilter::make('department')
-                   ->label(__('creators-ticketing::resources.ticket.department'))
-                   ->relationship('department', 'name')
-                   ->preload(),
+                    ->label(__('creators-ticketing::resources.ticket.department'))
+                    ->relationship('department', 'name')
+                    ->preload(),
 
                 SelectFilter::make('status')
-                   ->label(__('creators-ticketing::resources.ticket.status'))
-                   ->relationship('status', 'name')
-                   ->preload(),
+                    ->label(__('creators-ticketing::resources.ticket.status'))
+                    ->relationship('status', 'name')
+                    ->preload(),
 
                 SelectFilter::make('priority')
-                   ->label(__('creators-ticketing::resources.ticket.priority'))
-                   ->options(TicketPriority::class)
-                   ->preload(),
+                    ->label(__('creators-ticketing::resources.ticket.priority'))
+                    ->options(TicketPriority::class)
+                    ->preload(),
             ])
             ->actions([
                 ViewAction::make(),
                 Action::make('assign')
-                   ->label(__('creators-ticketing::resources.ticket.actions.assign'))
-                   ->icon('heroicon-o-user-plus')
-                   ->visible(fn (Model $record) => $record instanceof Ticket && (
-                       $permissions['is_admin'] ||
-                       (in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false)))
-                   )
-                   ->form([
-                       (config('creators-ticketing.ticket_assign_scope') === 'department_only')
-                         ? Select::make('assignee_id')
-                             ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
-                             ->searchable()
-                             ->getSearchResultsUsing(function (string $search, Component $component) use ($userModel) {
-                                 $departmentId = $component->getContainer()->getRecord()?->department_id;
-                                 $userInstance = new $userModel;
-                                 $userKey = $userInstance->getKeyName();
-                                 $pivotUserColumn = "user_{$userKey}";
+                    ->label(__('creators-ticketing::resources.ticket.actions.assign'))
+                    ->icon('heroicon-o-user-plus')
+                    ->visible(fn (Model $record) => $record instanceof Ticket && (
+                        $permissions['is_admin'] ||
+                        (in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false)))
+                    )
+                    ->form([
+                        (config('creators-ticketing.ticket_assign_scope') === 'department_only')
+                          ? Select::make('assignee_id')
+                              ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
+                              ->searchable()
+                              ->getSearchResultsUsing(function (string $search, Component $component) use ($userModel) {
+                                  $departmentId = $component->getContainer()->getRecord()?->department_id;
+                                  $userInstance = new $userModel;
+                                  $userKey = $userInstance->getKeyName();
+                                  $pivotUserColumn = "user_{$userKey}";
 
-                                 return $userModel::when(
-                                     config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                     fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
-                                         $subquery->select(DB::raw(1))
-                                             ->from(config('creators-ticketing.table_prefix').'department_users')
-                                             ->whereColumn(
-                                                 config('creators-ticketing.table_prefix')."department_users.{$pivotUserColumn}",
-                                                 "users.{$userKey}"
-                                             )
-                                             ->where(config('creators-ticketing.table_prefix').'department_users.department_id', $departmentId);
-                                     })
-                                 )
-                                     ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
-                                     ->limit(50)
-                                     ->get()
-                                     ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
-                             })
-                             ->getOptionLabelUsing(fn ($value): ?string => $userModel::find($value)?->name.' - '.$userModel::find($value)?->email
-                             )
-                             ->options(function (Component $component) use ($userModel): array {
-                                 if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
-                                     $departmentId = $component->getContainer()->getRecord()?->department_id;
-                                     if ($departmentId) {
-                                         return Department::find($departmentId)?->agents->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email])->toArray() ?? [];
-                                     }
-                                 }
+                                  return $userModel::when(
+                                      config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
+                                      fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
+                                          $subquery->select(DB::raw(1))
+                                              ->from(config('creators-ticketing.table_prefix').'department_users')
+                                              ->whereColumn(
+                                                  config('creators-ticketing.table_prefix')."department_users.{$pivotUserColumn}",
+                                                  "users.{$userKey}"
+                                              )
+                                              ->where(config('creators-ticketing.table_prefix').'department_users.department_id', $departmentId);
+                                      })
+                                  )
+                                      ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                                      ->limit(50)
+                                      ->get()
+                                      ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
+                              })
+                              ->getOptionLabelUsing(fn ($value): ?string => $userModel::find($value)?->name.' - '.$userModel::find($value)?->email
+                              )
+                              ->options(function (Component $component) use ($userModel): array {
+                                  if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
+                                      $departmentId = $component->getContainer()->getRecord()?->department_id;
+                                      if ($departmentId) {
+                                          return Department::find($departmentId)?->agents->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email])->toArray() ?? [];
+                                      }
+                                  }
 
-                                 return $userModel::limit(50)
-                                     ->get()
-                                     ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email])
-                                     ->toArray();
-                             })
-                             ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
-                             ->preload(fn (Model $record) => $record instanceof Ticket && config('creators-ticketing.ticket_assign_scope') === 'department_only' && $record->department_id !== null)
-                             ->native(false)
+                                  return $userModel::limit(50)
+                                      ->get()
+                                      ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email])
+                                      ->toArray();
+                              })
+                              ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
+                              ->preload(fn (Model $record) => $record instanceof Ticket && config('creators-ticketing.ticket_assign_scope') === 'department_only' && $record->department_id !== null)
+                              ->native(false)
 
-                       : Select::make('assignee_id')
-                           ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
-                           ->searchable()
-                           ->getSearchResultsUsing(function (string $search) use ($userModel) {
-                               return $userModel::where('name', 'like', "%{$search}%")
-                                   ->orWhere('email', 'like', "%{$search}%")
-                                   ->limit(50)
-                                   ->get()
-                                   ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
-                           })
-                           ->getOptionLabelUsing(fn ($value): ?string => $userModel::find($value)?->name.' - '.$userModel::find($value)?->email
-                           )
-                           ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
-                           ->preload(false)
-                           ->native(false),
-                   ])
-                   ->action(function (Model $record, array $data) use ($userModel) {
-                       if (! $record instanceof Ticket) {
-                           return;
-                       }
-                       $record->update(['assignee_id' => $data['assignee_id']]);
+                        : Select::make('assignee_id')
+                            ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
+                            ->searchable()
+                            ->getSearchResultsUsing(function (string $search) use ($userModel) {
+                                return $userModel::where('name', 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%")
+                                    ->limit(50)
+                                    ->get()
+                                    ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
+                            })
+                            ->getOptionLabelUsing(fn ($value): ?string => $userModel::find($value)?->name.' - '.$userModel::find($value)?->email
+                            )
+                            ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
+                            ->preload(false)
+                            ->native(false),
+                    ])
+                    ->action(function (Model $record, array $data) use ($userModel) {
+                        if (! $record instanceof Ticket) {
+                            return;
+                        }
+                        $record->update(['assignee_id' => $data['assignee_id']]);
 
-                       $record->activities()->create([
-                           'user_id' => auth()->id(),
-                           'description' => 'Ticket assigned',
-                           'new_value' => $userModel::find($data['assignee_id'])?->name,
-                       ]);
+                        $record->activities()->create([
+                            'user_id' => auth()->id(),
+                            'description' => 'Ticket assigned',
+                            'new_value' => $userModel::find($data['assignee_id'])?->name,
+                        ]);
 
-                       Notification::make()
-                           ->title(__('creators-ticketing::resources.ticket.notifications.assigned'))
-                           ->success()
-                           ->send();
-                   }),
+                        Notification::make()
+                            ->title(__('creators-ticketing::resources.ticket.notifications.assigned'))
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                   DeleteBulkAction::make()
-                       ->visible(fn () => $permissions['is_admin'] ||
-                          collect($permissions['permissions'])->pluck('can_delete_tickets')->contains(true)
-                       ),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => $permissions['is_admin'] ||
+                           collect($permissions['permissions'])->pluck('can_delete_tickets')->contains(true)
+                        ),
                 ]),
             ]);
     }
