@@ -12,7 +12,8 @@
     "require": {
         "php": "^8.2",
         "filament/filament": "^4.1",
-        "illuminate/contracts": "^11.0|^12.0"
+        "illuminate/contracts": "^11.0|^12.0",
+        "staudenmeir/belongs-to-through": "^2.17"
     },
     "autoload": {
         "psr-4": {
