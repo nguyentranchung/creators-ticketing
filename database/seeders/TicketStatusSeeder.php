@@ -30,12 +30,20 @@ class TicketStatusSeeder extends Seeder
                 'order_column' => 2,
             ],
             [
+                'name' => 'Answered',
+                'slug' => 'answered',
+                'color' => '#22c55e', // Green
+                'is_default_for_new' => false,
+                'is_closing_status' => false,
+                'order_column' => 3,
+            ],
+            [
                 'name' => 'Pending',
                 'slug' => 'pending',
                 'color' => '#8b5cf6', // Purple
                 'is_default_for_new' => false,
                 'is_closing_status' => false,
-                'order_column' => 3,
+                'order_column' => 4,
             ],
             [
                 'name' => 'Resolved',
@@ -43,7 +51,7 @@ class TicketStatusSeeder extends Seeder
                 'color' => '#10b981', // Green
                 'is_default_for_new' => false,
                 'is_closing_status' => false,
-                'order_column' => 4,
+                'order_column' => 5,
             ],
             [
                 'name' => 'Closed',
@@ -51,7 +59,7 @@ class TicketStatusSeeder extends Seeder
                 'color' => '#6b7280', // Gray
                 'is_default_for_new' => false,
                 'is_closing_status' => true,
-                'order_column' => 5,
+                'order_column' => 6,
             ],
         ];
 
