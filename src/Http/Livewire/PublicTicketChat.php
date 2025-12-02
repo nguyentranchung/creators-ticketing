@@ -83,7 +83,7 @@ class PublicTicketChat extends Component
         TicketReply::create([
             'ticket_id' => $this->ticket->id,
             'user_id' => auth()->id(),
-            'content' => $this->message,
+            'content' => $cleanMessage,
             'is_internal_note' => false,
         ]);
 
